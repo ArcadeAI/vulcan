@@ -41,7 +41,10 @@ function ArgsRenderer({ args }: { args: Record<string, any> }) {
         const isUrl = typeof value === "string" && isOnlyUrl(value);
 
         return (
-          <div key={`args-${k}`} className="flex flex-col gap-1 items-start">
+          <div
+            key={`args-${k}`}
+            className="flex flex-col gap-1 items-start max-w-[600px]"
+          >
             <p className="text-sm leading-[18px] text-gray-600 text-wrap">
               {prettifyText(k)}:
             </p>

@@ -259,7 +259,7 @@ export function StateView({
         </div>
       )}
       {view === "state" && (
-        <div className="block max-w-[55%] pl-2 pr-4 items-start justify-start gap-3 break-words">
+        <div className="pl-2 pr-4 items-start justify-start gap-3 break-words">
           {Object.entries(values).map(([k, v], idx) => (
             <StateViewObject
               expanded={expanded}
@@ -270,7 +270,7 @@ export function StateView({
           ))}
         </div>
       )}
-      <div className="block max-w-[59%] flex gap-2 items-start justify-end ">
+      <div className="flex gap-2 items-start justify-end ">
         {view === "state" && (
           <Button
             onClick={() => setExpanded((prev) => !prev)}

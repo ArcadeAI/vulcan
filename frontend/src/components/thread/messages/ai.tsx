@@ -111,7 +111,7 @@ export function AssistantMessage({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 px-4 py-3 rounded-lg bg-gray-50 relative",
+        "flex flex-col gap-2 px-4 py-3 rounded-lg bg-gray-50",
         isLoading && "animate-pulse",
       )}
     >

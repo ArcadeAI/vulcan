@@ -102,7 +102,7 @@ export function ThreadActionsView({
   const actionsDisabled = loading || streaming;
 
   return (
-    <div className="flex flex-wrap min-h-full gap-9  max-w-[58%]">
+    <div className="flex flex-wrap min-h-full gap-9 ">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between w-full gap-3 overflow-hidden">
         <div className="flex items-center justify-start gap-3 overflow-hidden text-ellipsis">
@@ -129,25 +129,6 @@ export function ThreadActionsView({
             showingDescription={showDescription}
           />
         </div>
-      </div>
-
-      <div className="flex flex-row gap-2 items-center justify-start w-full overflow-x-auto">
-        <Button
-          variant="outline"
-          className="text-gray-800 border-gray-500 font-normal bg-white"
-          onClick={handleResolve}
-          disabled={actionsDisabled}
-        >
-          Mark as Resolved
-        </Button>
-        <Button
-          variant="outline"
-          className="text-gray-800 border-gray-500 font-normal bg-white"
-          onClick={handleIgnore}
-          disabled={actionsDisabled}
-        >
-          Ignore
-        </Button>
       </div>
 
       {/* Actions */}

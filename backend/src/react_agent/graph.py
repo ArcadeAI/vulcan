@@ -5,7 +5,7 @@ from langgraph.graph.state import CompiledStateGraph
 from langgraph.prebuilt import ToolNode, create_react_agent
 
 from react_agent.prompts import SYSTEM_PROMPT
-from react_agent.tools import get_tools
+from react_agent.tools import get_langchain_tools
 from react_agent.utils import get_formatted_times, load_chat_model
 
 
@@ -45,10 +45,8 @@ async def make_graph(config: RunnableConfig) -> CompiledStateGraph:
     tool_types = config.get("configurable", {}).get("tools", [])
 
     # Get the tools filtered by allowed types
-    allowed_tools = get_tools(tool_types)
+    allowed_tools = get_langchain_tools(tool_types)
 
-    tool_node = ToolNode(tools=allowed_tools)
-
-    graph = create_react_agent(model, tools=tool_node, prompt=prompt)
+    graph = create_react_agent(model, tools=allowed_tools, prompt=prompt, version="v2")
     graph.name = "ReAct Agent"  # This customizes the name in LangSmith
     return graph

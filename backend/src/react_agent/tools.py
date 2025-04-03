@@ -1,174 +1,135 @@
+import asyncio
+import json
 import logging
 import os
 from functools import lru_cache
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
+from arcadepy import Arcade
+from arcadepy._exceptions import APIError, AuthenticationError, PermissionDeniedError
+from arcadepy.types import ToolDefinition
+from arcadepy.types.execute_tool_response import Output
 from langchain_core.tools import StructuredTool
 from langgraph.config import get_config
 from langgraph.types import interrupt
-from oxp import Oxp
-from oxp._exceptions import APIStatusError, OxpError
-from oxp.types.tool_call_params import Request
-from oxp.types.tool_call_response import ToolCallResponse
-from oxp.types.tool_list_response import Item, ToolListResponse
+
+from react_agent.defaults import get_tools
+from react_agent.tool_utils import tool_definition_to_pydantic_model
 
 # Set up logging
 logger = logging.getLogger(__name__)
 
-# Tool dictionaries by service
-service_methods = {
-    "x": [
-        "X_DeleteTweetById",
-        "X_LookupSingleUserByUsername",
-        "X_LookupTweetById",
-        "X_PostTweet",
-        "X_SearchRecentTweetsByKeywords",
-        "X_SearchRecentTweetsByUsername",
-    ],
-    "github": [
-        "Github_CountStargazers",
-        "Github_CreateIssue",
-        "Github_CreateIssueComment",
-        "Github_CreateReplyForReviewComment",
-        "Github_CreateReviewComment",
-        "Github_GetPullRequest",
-        "Github_GetRepository",
-        "Github_ListOrgRepositories",
-        "Github_ListPullRequestCommits",
-        "Github_ListPullRequests",
-        "Github_ListRepositoryActivities",
-        "Github_ListReviewCommentsInARepository",
-        "Github_ListReviewCommentsOnPullRequest",
-        "Github_ListStargazers",
-        "Github_SetStarred",
-        "Github_UpdatePullRequest",
-    ],
-    "gmail": [
-        "Google_ListDraftEmails",
-        "Google_ListEmails",
-        "Google_ReplyToEmail",
-        "Google_SendEmail",
-        "Google_SendDraftEmail",
-        "Google_WriteDraftEmail",
-        "Google_WriteDraftReplyEmail",
-        "Google_SearchContactsByEmail",
-        "Google_SearchContactsByName",
-    ],
-    "google": [
-        "Google_ChangeEmailLabels",
-        "Google_CreateContact",
-        "Google_CreateLabel",
-        "Google_DeleteDraftEmail",
-        "Google_GetThread",
-        "Google_ListEmailsByHeader",
-        "Google_ListLabels",
-        "Google_ListThreads",
-        "Google_SearchContactsByEmail",
-        "Google_SearchContactsByName",
-        "Google_SearchThreads",
-        "Google_TrashEmail",
-        "Google_UpdateDraftEmail",
-    ],
-    "gcal": [
-        "Google_SearchContactsByEmail",
-        "Google_SearchContactsByName",
-        "Google_CreateEvent",
-        "Google_ListEvents",
-        "Google_UpdateEvent",
-        "Google_DeleteEvent",
-    ],
-    "linkedin": ["Linkedin_CreateTextPost"],
-    "search": [
-        "Search_SearchGoogle",
-    ],
-    "hotels": ["Search_SearchHotels"],
-    "flights": [
-        "Search_SearchOneWayFlights",
-        "Search_SearchRoundTripFlights",
-    ],
-    "stocks": ["Search_StockSummary", "Search_StockHistoricalData"],
-    "codesandbox": ["CodeSandbox_RunCode"],
-}
+# Import the service methods from defaults
 
 
-def get_oxp_client() -> Oxp:
-    """Get an initialized OXP client instance.
+def get_arcade_client() -> Arcade:
+    """Get an initialized Arcade client instance.
 
     Returns:
-        An initialized Oxp client
+        An initialized Arcade client
 
     Raises:
-        OxpError: If required credentials are missing
+        Exception: If required credentials are missing
     """
     try:
-        # Note: The Oxp client looks for OXP_API_KEY by default
-        # If you're using OXP_BEARER_TOKEN, set it explicitly
-        bearer_token = os.environ.get("OXP_BEARER_TOKEN") or os.environ.get(
-            "OXP_API_KEY"
+        # Note: The Arcade client looks for authentication credentials
+        api_key = os.environ.get("ARCADE_API_KEY") or os.environ.get(
+            "ARCADE_BEARER_TOKEN"
         )
-        base_url = os.environ.get("OXP_BASE_URL")
+        base_url = os.environ.get("ARCADE_BASE_URL", "https://api.arcade.dev")
 
-        client = Oxp(
-            bearer_token=bearer_token,
+        client = Arcade(
+            api_key=api_key,
             base_url=base_url,
         )
 
         # Perform a health check to verify connectivity
         client.health.check()
         return client
-    except OxpError as e:
-        logger.error(f"Failed to initialize OXP client: {str(e)}")
+    except Exception as e:
+        logger.error(f"Failed to initialize Arcade client: {str(e)}")
         raise
 
 
-@lru_cache(maxsize=1)
-def _get_available_tools() -> tuple[List[str], Dict[str, Item]]:
-    """Get available tools from the OXP client with caching.
+def _get_available_tools() -> Tuple[List[str], Dict[str, ToolDefinition]]:
+    """Get available tools from the Arcade client with caching.
 
     Returns:
         A tuple of (tool_ids, available_tools_by_name)
     """
-    client = get_oxp_client()
+    client = get_arcade_client()
     try:
-        response: ToolListResponse = client.tools.list()
+        response = client.tools.list(limit=1000)
         available_tools = response.items
-        available_tools_by_name = {tool.name: tool for tool in available_tools}
-        tool_ids = list(available_tools_by_name)
-        return tool_ids, available_tools_by_name
-    except APIStatusError as e:
+        tool_definitions = {tool.name: tool for tool in available_tools}
+        tool_names = get_tools()
+        final_tools = []
+        for t, definition in tool_definitions.items():
+            if t in tool_names:
+                final_tools.append(definition)
+        return final_tools
+    except Exception as e:
         logger.error(f"Failed to get available tools: {str(e)}")
         raise
 
 
-def _handle_authorization_error(error_body: Dict[str, Any], user_id: str) -> None:
+def _handle_authorization_error(output: Output, user_id: str) -> None:
     """Handle authorization-related errors.
 
     Args:
-        error_body: The error body from the API
+        output: The output from the API response
         user_id: The ID of the user making the request
     """
-    if "missing_requirements" not in error_body:
-        return
+    if output.authorization is None:
+        logger.error(f"No authorization found in output: {output}")
+        raise ValueError("No authorization found in output")
 
-    missing_req = error_body["missing_requirements"]
-    if "authorization" not in missing_req:
-        return
-
-    authorization = missing_req["authorization"]
-    if not authorization or len(authorization) != 1:
-        return
-
-    auth = authorization[0]
-    if "authorization_url" not in auth:
-        return
-
+    auth = output.authorization
     logger.info(f"Authorization required for user {user_id}, initiating auth flow")
-    interrupt(
+    return interrupt(
         [
             {
                 "action_request": {
                     "action": "Auth",
-                    "args": {"url": auth["authorization_url"]},
+                    "args": {"url": auth.url},
+                },
+                "config": {
+                    "allow_ignore": False,
+                    "allow_respond": False,
+                    "allow_edit": False,
+                    "allow_accept": True,
+                },
+                "description": None,
+            }
+        ]
+    )
+
+
+def _handle_auth_exception(exception: Exception, user_id: str, tool_name: str) -> None:
+    """Handle authentication-related exceptions.
+
+    Args:
+        exception: The exception that was raised
+        user_id: The ID of the user making the request
+    """
+    logger.info(f"Authentication error for user {user_id}, initiating auth flow")
+    # Extract URL from exception if available or use a default auth URL
+    auth_url = getattr(exception, "url", None)
+    if not auth_url:
+        client = get_arcade_client()
+        auth_response = client.tools.authorize(tool_name=tool_name, user_id=user_id)
+        logger.info(f"Authorization response: {auth_response}")
+        if auth_response.url:
+            auth_url = auth_response.url
+        else:
+            raise ValueError("No authorization URL found in response")
+
+    return interrupt(
+        [
+            {
+                "action_request": {
+                    "action": "Auth",
+                    "args": {"url": auth_url},
                 },
                 "config": {
                     "allow_ignore": False,
@@ -196,7 +157,7 @@ def create_tool_caller(tool_id: str) -> Callable[..., Any]:
 
     def call_tool(**kwargs: Any) -> Any:
         """Call a tool with the given parameters."""
-        client = get_oxp_client()
+        client = get_arcade_client()
         config = get_config()
         user_id = config["configurable"].get("langgraph_auth_user_id")
 
@@ -206,34 +167,23 @@ def create_tool_caller(tool_id: str) -> Callable[..., Any]:
 
         logger.debug(f"Calling tool {tool_id} for user {user_id} with args: {kwargs}")
 
-        # Prepare the request according to the Oxp client's expectations
-        request: Request = {
-            "tool_id": tool_id,
-            "context": {
-                "user_id": user_id,
-            },
-            "input": kwargs,
-        }
-
         try:
             # Call the tool using the client's built-in method
-            response: ToolCallResponse = client.tools.call(request=request)
+            response = client.tools.execute(
+                tool_name=tool_id, input=kwargs, user_id=user_id
+            )
 
             # Check for successful response
             if not response.success:
-                error_msg = response.error or "Unknown error occurred"
+                error_msg = response.output.error or "Unknown error occurred"
                 logger.error(f"Tool call failed: {error_msg}")
                 raise ValueError(f"Tool call to {tool_id} failed: {error_msg}")
 
-            return response.value
+            return response.output.value
 
-        except APIStatusError as e:
-            # Handle other API errors
-            logger.error(f"API error calling tool {tool_id}: {str(e)}")
-            if hasattr(e, "body"):
-                _handle_authorization_error(e.body, user_id)
-            raise
-
+        except (PermissionDeniedError, AuthenticationError) as e:
+            # Handle auth errors without depending on response variable
+            return _handle_auth_exception(e, user_id, tool_id)
         except Exception as e:
             # Handle unexpected errors
             logger.exception(f"Unexpected error calling tool {tool_id}: {str(e)}")
@@ -242,7 +192,15 @@ def create_tool_caller(tool_id: str) -> Callable[..., Any]:
     return call_tool
 
 
-def get_tools(tool_types: Optional[List[str]] = None) -> List[StructuredTool]:
+def convert_output_to_json(output: Any) -> str:
+    """Convert output to JSON string."""
+    if isinstance(output, dict) or isinstance(output, list):
+        return json.dumps(output)
+    else:
+        return str(output)
+
+
+def get_langchain_tools(tool_types: Optional[List[str]] = None) -> List[StructuredTool]:
     """Get structured tools, optionally filtered by tool type.
 
     Args:
@@ -251,39 +209,20 @@ def get_tools(tool_types: Optional[List[str]] = None) -> List[StructuredTool]:
     Returns:
         List of structured tools
     """
-    tool_ids, available_tools_by_name = _get_available_tools()
-
-    # Filter tool_ids by tool_types if specified
-    if tool_types:
-        allowed_tool_names = set()
-        for t_type in tool_types:
-            if t_type in service_methods:
-                allowed_tool_names.update(service_methods[t_type])
-            else:
-                logger.warning(f"Unknown tool type: {t_type}")
-
-        tool_ids = [t_id for t_id in tool_ids if t_id in allowed_tool_names]
-
-        if not tool_ids:
-            logger.warning(f"No tools found for the specified types: {tool_types}")
-
-    tools = []
-    for tool_id in tool_ids:
-        if tool_id not in available_tools_by_name:
-            logger.warning(f"Tool {tool_id} not found in available tools")
-            continue
-
-        tool = available_tools_by_name[tool_id]
+    tools = _get_available_tools()
+    langchain_tools = []
+    for tool in tools:
         try:
-            tools.append(
+            langchain_tools.append(
                 StructuredTool(
                     name=tool.name,
                     description=tool.description,
-                    args_schema=tool.input_schema,
-                    func=create_tool_caller(tool_id),
+                    args_schema=tool_definition_to_pydantic_model(tool),
+                    func=create_tool_caller("_".join((tool.toolkit.name, tool.name))),
                 )
             )
         except Exception as e:
-            logger.error(f"Failed to create tool for {tool_id}: {str(e)}")
+            logger.error(f"Failed to create tool for {tool.name}: {str(e)}")
 
-    return tools
+    return langchain_tools
+
