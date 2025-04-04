@@ -68,10 +68,7 @@ export function ThreadActionsView({
     streaming,
     supportsMultipleMethods,
     streamFinished,
-    loading,
     handleSubmit,
-    handleIgnore,
-    handleResolve,
     setSelectedSubmitType,
     setHasAddedResponse,
     setHasEdited,
@@ -99,7 +96,6 @@ export function ThreadActionsView({
   };
 
   const threadTitle = interrupt.action_request.action || "Unknown";
-  const actionsDisabled = loading || streaming;
 
   return (
     <div className="flex flex-wrap min-h-full gap-9 ">
