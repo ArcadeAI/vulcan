@@ -1,7 +1,7 @@
 import { AIMessage, ToolMessage } from "@langchain/langgraph-sdk";
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useState } from "react";
 
 function isComplexValue(value: any): boolean {
   return Array.isArray(value) || (typeof value === "object" && value !== null);
@@ -84,6 +84,7 @@ export function ToolResult({ message }: { message: ToolMessage }) {
   const contentStr = isJsonContent
     ? JSON.stringify(parsedContent, null, 2)
     : String(message.content);
+
   const contentLines = contentStr.split("\n");
   const shouldTruncate = contentLines.length > 4 || contentStr.length > 500;
   const displayedContent =
@@ -146,7 +147,7 @@ export function ToolResult({ message }: { message: ToolMessage }) {
                           <td className="px-4 py-2 text-sm font-medium text-gray-900 whitespace-nowrap">
                             {key}
                           </td>
-                          <td className="px-4 py-2 text-sm text-gray-500">
+                          <td className="px-4 py-2 text-sm block max-w-2xl whitespace-pre-wrap break-words font-mono p-1 bg-gray-50 rounded">
                             {isComplexValue(value) ? (
                               <code className="bg-gray-50 rounded px-2 py-1 font-mono text-sm">
                                 {JSON.stringify(value, null, 2)}
@@ -161,24 +162,24 @@ export function ToolResult({ message }: { message: ToolMessage }) {
                   </tbody>
                 </table>
               ) : (
-                <code className="text-sm block">{displayedContent}</code>
+                <>
+                  <code className="px-4 py-2 text-sm block max-w-2xl whitespace-pre-wrap break-words font-mono p-1 bg-gray-50 rounded">
+                    {displayedContent}
+                  </code>
+                </>
               )}
             </motion.div>
           </AnimatePresence>
         </div>
-        {((shouldTruncate && !isJsonContent) ||
-          (isJsonContent &&
-            Array.isArray(parsedContent) &&
-            parsedContent.length > 5)) && (
-          <motion.button
-            onClick={() => setIsExpanded(!isExpanded)}
+
+        {shouldTruncate && (
+          <button
             className="w-full py-2 flex items-center justify-center border-t-[1px] border-gray-200 text-gray-500 hover:text-gray-600 hover:bg-gray-50 transition-all ease-in-out duration-200 cursor-pointer"
-            initial={{ scale: 1 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            onClick={() => setIsExpanded(!isExpanded)}
+            tabIndex={0}
           >
             {isExpanded ? <ChevronUp /> : <ChevronDown />}
-          </motion.button>
+          </button>
         )}
       </motion.div>
     </div>

@@ -1,13 +1,13 @@
-import { HumanResponseWithEdits, SubmitType } from "../types";
-import { Textarea } from "@/components/ui/textarea";
-import React from "react";
-import { haveArgsChanged, prettifyText } from "../utils";
 import { Button } from "@/components/ui/button";
-import { Undo2 } from "lucide-react";
-import { MarkdownText } from "../../markdown-text";
-import { ActionRequest, HumanInterrupt } from "@langchain/langgraph/prebuilt";
-import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { ActionRequest, HumanInterrupt } from "@langchain/langgraph/prebuilt";
+import { Undo2 } from "lucide-react";
+import React from "react";
+import { toast } from "sonner";
+import { MarkdownText } from "../../markdown-text";
+import { HumanResponseWithEdits, SubmitType } from "../types";
+import { haveArgsChanged, prettifyText } from "../utils";
 
 function ResetButton({ handleReset }: { handleReset: () => void }) {
   return (
@@ -23,6 +23,11 @@ function ResetButton({ handleReset }: { handleReset: () => void }) {
 }
 
 function ArgsRenderer({ args }: { args: Record<string, any> }) {
+  const isOnlyUrl = (text: string) => {
+    // Simple URL validation - checks if the entire string is a URL
+    return /^https?:\/\/\S+$/.test(text.trim());
+  };
+
   return (
     <div className="flex flex-col gap-6 items-start w-full">
       {Object.entries(args).map(([k, v]) => {
@@ -33,14 +38,30 @@ function ArgsRenderer({ args }: { args: Record<string, any> }) {
           value = JSON.stringify(v, null);
         }
 
+        const isUrl = typeof value === "string" && isOnlyUrl(value);
+
         return (
-          <div key={`args-${k}`} className="flex flex-col gap-1 items-start">
+          <div
+            key={`args-${k}`}
+            className="flex flex-col gap-1 items-start max-w-[600px]"
+          >
             <p className="text-sm leading-[18px] text-gray-600 text-wrap">
               {prettifyText(k)}:
             </p>
-            <span className="text-[13px] leading-[18px] text-black bg-zinc-100 rounded-xl p-3 w-full max-w-full">
-              <MarkdownText>{value}</MarkdownText>
-            </span>
+            {isUrl ? (
+              <a
+                href={value}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[13px] leading-[18px] text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                {value}
+              </a>
+            ) : (
+              <span className="text-[13px] leading-[18px] max-w-[55%] text-black bg-zinc-100 rounded-xl p-4 text-wrap">
+                <MarkdownText>{value}</MarkdownText>
+              </span>
+            )}
           </div>
         );
       })}
@@ -251,7 +272,7 @@ function EditAndOrAcceptComponent({
   };
 
   return (
-    <div className="flex flex-col gap-4 items-start w-full p-6 rounded-lg border-[1px] border-gray-300">
+    <div className="flex flex-col gap-4 items-start w-full p-4 rounded-lg border-[1px] border-gray-300">
       <div className="flex items-center justify-between w-full">
         <p className="font-semibold text-black text-base">{header}</p>
         <ResetButton handleReset={handleReset} />

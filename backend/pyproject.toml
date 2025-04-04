@@ -12,7 +12,7 @@ dependencies = [
     "langchain-openai>=0.1.22",
     "langchain>=0.2.14",
     "python-dotenv>=1.0.1",
-    "oxp",
+    "oxp==0.0.2",
     "pyjwt",
 ]
 

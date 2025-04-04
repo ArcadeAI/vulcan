@@ -2,18 +2,18 @@
 
 import "@assistant-ui/react-markdown/styles/dot.css";
 
+import { SyntaxHighlighter } from "@/components/thread/syntax-highlighter";
 import {
   CodeHeaderProps,
   unstable_memoizeMarkdownComponents as memoizeMarkdownComponents,
   useIsMarkdownCodeBlock,
 } from "@assistant-ui/react-markdown";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeKatex from "rehype-katex";
-import remarkMath from "remark-math";
-import { FC, memo, useState } from "react";
 import { CheckIcon, CopyIcon } from "lucide-react";
-import { SyntaxHighlighter } from "@/components/thread/syntax-highlighter";
+import { FC, memo, useState } from "react";
+import ReactMarkdown from "react-markdown";
+import rehypeKatex from "rehype-katex";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
 
 import { TooltipIconButton } from "@/components/thread/tooltip-icon-button";
 import { cn } from "@/lib/utils";

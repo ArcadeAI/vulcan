@@ -1,38 +1,37 @@
-import { v4 as uuidv4 } from "uuid";
-import { ReactNode, useEffect, useRef } from "react";
-import { motion } from "framer-motion";
+import { useMediaQuery } from "@/hooks/useMediaQuery";
+import {
+  DO_NOT_RENDER_ID_PREFIX,
+  ensureToolCallsHaveResponses,
+} from "@/lib/ensure-tool-responses";
 import { cn } from "@/lib/utils";
 import { useStreamContext } from "@/providers/Stream";
-import { useState, FormEvent } from "react";
-import { Button } from "../ui/button";
 import {
   Checkpoint,
   Message,
   Thread as ThreadType,
 } from "@langchain/langgraph-sdk";
-import { AssistantMessage, AssistantMessageLoading } from "./messages/ai";
-import { HumanMessage } from "./messages/human";
-import {
-  DO_NOT_RENDER_ID_PREFIX,
-  ensureToolCallsHaveResponses,
-} from "@/lib/ensure-tool-responses";
-import { LangGraphLogoSVG } from "../icons/langgraph";
-import { TooltipIconButton } from "./tooltip-icon-button";
+import { motion } from "framer-motion";
 import {
   ArrowDown,
   LoaderCircle,
-  PanelRightOpen,
   PanelRightClose,
+  PanelRightOpen,
   SquarePen,
 } from "lucide-react";
+import { FormEvent, ReactNode, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 import { BooleanParam, StringParam, useQueryParam } from "use-query-params";
 import { StickToBottom, useStickToBottomContext } from "use-stick-to-bottom";
-import ThreadHistory from "./history";
-import { toast } from "sonner";
-import { useMediaQuery } from "@/hooks/useMediaQuery";
+import { v4 as uuidv4 } from "uuid";
+import { LangGraphLogoSVG } from "../icons/langgraph";
+import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
+import ThreadHistory from "./history";
+import { AssistantMessage, AssistantMessageLoading } from "./messages/ai";
+import { HumanMessage } from "./messages/human";
 import { Toolkit, ToolkitSelector } from "./ToolkitSelector";
+import { TooltipIconButton } from "./tooltip-icon-button";
 
 function StickyToBottomContent(props: {
   content: ReactNode;
@@ -317,6 +316,7 @@ export function Thread() {
                 }}
               >
                 <LangGraphLogoSVG width={32} height={32} />
+
                 <span className="text-xl font-semibold tracking-tight">
                   Vulcan
                 </span>
@@ -460,6 +460,23 @@ export function Thread() {
             }
           />
         </StickToBottom>
+        {/* TODO: move this to a separate component */}
+        <div className="flex items-center justify-center gap-1 text-sm text-muted-foreground py-1 bg-muted">
+          <a
+            href="https://github.com/arcadeai/"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Tools powered by{" "}
+          </a>
+          <a
+            href="https://arcade.dev"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <img src="/arcade.png" alt="Arcade" className="h-7" />
+          </a>
+        </div>
       </motion.div>
     </div>
   );

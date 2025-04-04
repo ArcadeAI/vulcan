@@ -56,12 +56,12 @@ class State:
     def __delattr__(self, key: typing.Any) -> None:
         del self._state[key]
 
+
 from datetime import datetime, timedelta, timezone
 
 
 def get_formatted_times(user_timezone: str | None = None) -> str:
-    """
-    Returns a formatted string with current times in major time zones.
+    """Returns a formatted string with current times in major time zones.
 
     This helps the LLM provide accurate time-based information regardless of user location.
     Includes UTC, Eastern Time (ET), Central Time (CT), Pacific Time (PT), and GMT.
@@ -108,7 +108,9 @@ def get_formatted_times(user_timezone: str | None = None) -> str:
 
     for zone_name, offset in time_zones.items():
         zone_time = utc_now.replace(tzinfo=timezone(timedelta(hours=offset)))
-        time_strings.append(f"{zone_name}: {zone_time.strftime(f'{date_format} {time_format}')}")
+        time_strings.append(
+            f"{zone_name}: {zone_time.strftime(f'{date_format} {time_format}')}"
+        )
 
     # TODO: Add user timezone to the time strings
     # if user_timezone:

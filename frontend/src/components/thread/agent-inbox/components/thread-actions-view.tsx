@@ -1,12 +1,12 @@
 import { Button } from "@/components/ui/button";
-import { ThreadIdCopyable } from "./thread-id";
-import { InboxItemInput } from "./inbox-item-input";
-import useInterruptedActions from "../hooks/use-interrupted-actions";
 import { cn } from "@/lib/utils";
+import { HumanInterrupt } from "@langchain/langgraph/prebuilt";
 import { toast } from "sonner";
 import { StringParam, useQueryParam } from "use-query-params";
+import useInterruptedActions from "../hooks/use-interrupted-actions";
 import { constructOpenInStudioURL } from "../utils";
-import { HumanInterrupt } from "@langchain/langgraph/prebuilt";
+import { InboxItemInput } from "./inbox-item-input";
+import { ThreadIdCopyable } from "./thread-id";
 
 interface ThreadActionsViewProps {
   interrupt: HumanInterrupt;
@@ -102,11 +102,13 @@ export function ThreadActionsView({
   const actionsDisabled = loading || streaming;
 
   return (
-    <div className="flex flex-col min-h-full w-full gap-9">
+    <div className="flex flex-wrap min-h-full gap-9 ">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between w-full gap-3">
-        <div className="flex items-center justify-start gap-3">
-          <p className="text-2xl tracking-tighter text-pretty">{threadTitle}</p>
+      <div className="flex flex-wrap items-center justify-between w-full gap-3 overflow-hidden">
+        <div className="flex items-center justify-start gap-3 overflow-hidden text-ellipsis">
+          <p className="text-2xl tracking-tighter text-pretty truncate">
+            {threadTitle}
+          </p>
           {threadId && <ThreadIdCopyable threadId={threadId} />}
         </div>
         <div className="flex flex-row gap-2 items-center justify-start">
@@ -129,42 +131,25 @@ export function ThreadActionsView({
         </div>
       </div>
 
-      <div className="flex flex-row gap-2 items-center justify-start w-full">
-        <Button
-          variant="outline"
-          className="text-gray-800 border-gray-500 font-normal bg-white"
-          onClick={handleResolve}
-          disabled={actionsDisabled}
-        >
-          Mark as Resolved
-        </Button>
-        <Button
-          variant="outline"
-          className="text-gray-800 border-gray-500 font-normal bg-white"
-          onClick={handleIgnore}
-          disabled={actionsDisabled}
-        >
-          Ignore
-        </Button>
-      </div>
-
       {/* Actions */}
-      <InboxItemInput
-        acceptAllowed={acceptAllowed}
-        hasEdited={hasEdited}
-        hasAddedResponse={hasAddedResponse}
-        interruptValue={interrupt}
-        humanResponse={humanResponse}
-        initialValues={initialHumanInterruptEditValue.current}
-        setHumanResponse={setHumanResponse}
-        streaming={streaming}
-        streamFinished={streamFinished}
-        supportsMultipleMethods={supportsMultipleMethods}
-        setSelectedSubmitType={setSelectedSubmitType}
-        setHasAddedResponse={setHasAddedResponse}
-        setHasEdited={setHasEdited}
-        handleSubmit={handleSubmit}
-      />
+      <div className="overflow-auto">
+        <InboxItemInput
+          acceptAllowed={acceptAllowed}
+          hasEdited={hasEdited}
+          hasAddedResponse={hasAddedResponse}
+          interruptValue={interrupt}
+          humanResponse={humanResponse}
+          initialValues={initialHumanInterruptEditValue.current}
+          setHumanResponse={setHumanResponse}
+          streaming={streaming}
+          streamFinished={streamFinished}
+          supportsMultipleMethods={supportsMultipleMethods}
+          setSelectedSubmitType={setSelectedSubmitType}
+          setHasAddedResponse={setHasAddedResponse}
+          setHasEdited={setHasEdited}
+          handleSubmit={handleSubmit}
+        />
+      </div>
     </div>
   );
 }

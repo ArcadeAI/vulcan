@@ -1,18 +1,18 @@
-import { ChevronRight, X, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { BaseMessage } from "@langchain/core/messages";
+import { ToolCall } from "@langchain/core/messages/tool";
+import { motion } from "framer-motion";
+import { ChevronRight, ChevronsDownUp, ChevronsUpDown, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import { MarkdownText } from "../../markdown-text";
 import {
   baseMessageObject,
   isArrayOfMessages,
   prettifyText,
   unknownToPrettyDate,
 } from "../utils";
-import { motion } from "framer-motion";
-import { cn } from "@/lib/utils";
-import { BaseMessage } from "@langchain/core/messages";
-import { ToolCall } from "@langchain/core/messages/tool";
 import { ToolCallTable } from "./tool-call-table";
-import { Button } from "@/components/ui/button";
-import { MarkdownText } from "../../markdown-text";
 
 interface StateViewRecursiveProps {
   value: unknown;
@@ -246,20 +246,20 @@ export function StateView({
   return (
     <div
       className={cn(
-        "flex flex-row gap-0 w-full",
+        "",
         view === "state" &&
           "border-t-[1px] lg:border-t-[0px] lg:border-l-[1px] border-gray-100 ",
       )}
     >
       {view === "description" && (
-        <div className="pt-6 pb-2">
+        <div className="pt-1 pb-2">
           <MarkdownText>
             {description ?? "No description provided"}
           </MarkdownText>
         </div>
       )}
       {view === "state" && (
-        <div className="flex flex-col items-start justify-start gap-1">
+        <div className="pl-2 pr-4 items-start justify-start gap-3 break-words">
           {Object.entries(values).map(([k, v], idx) => (
             <StateViewObject
               expanded={expanded}
@@ -270,7 +270,7 @@ export function StateView({
           ))}
         </div>
       )}
-      <div className="flex gap-2 items-start justify-end">
+      <div className="flex gap-2 items-start justify-end ">
         {view === "state" && (
           <Button
             onClick={() => setExpanded((prev) => !prev)}

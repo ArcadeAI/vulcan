@@ -1,19 +1,19 @@
-import { parsePartialJson } from "@langchain/core/output_parsers";
+import { isAgentInboxInterruptSchema } from "@/lib/agent-inbox-interrupt";
+import { cn } from "@/lib/utils";
 import { useStreamContext } from "@/providers/Stream";
+import { MessageContentComplex } from "@langchain/core/messages";
+import { parsePartialJson } from "@langchain/core/output_parsers";
 import { AIMessage, Checkpoint, Message } from "@langchain/langgraph-sdk";
+import { LoadExternalComponent } from "@langchain/langgraph-sdk/react-ui";
+import { Fragment } from "react/jsx-runtime";
+import { BooleanParam, useQueryParam } from "use-query-params";
+import { LangGraphLogoSVG } from "../../icons/langgraph";
+import { ThreadView } from "../agent-inbox";
+import { MarkdownText } from "../markdown-text";
+import { ToolkitBadges } from "../ToolkitSelector";
 import { getContentString } from "../utils";
 import { BranchSwitcher, CommandBar } from "./shared";
-import { MarkdownText } from "../markdown-text";
-import { LoadExternalComponent } from "@langchain/langgraph-sdk/react-ui";
-import { cn } from "@/lib/utils";
 import { ToolCalls, ToolResult } from "./tool-calls";
-import { MessageContentComplex } from "@langchain/core/messages";
-import { Fragment } from "react/jsx-runtime";
-import { isAgentInboxInterruptSchema } from "@/lib/agent-inbox-interrupt";
-import { ThreadView } from "../agent-inbox";
-import { BooleanParam, useQueryParam } from "use-query-params";
-import { ToolkitBadges } from "../ToolkitSelector";
-import { LangGraphLogoSVG } from "../../icons/langgraph";
 
 function CustomComponent({
   message,
@@ -84,7 +84,9 @@ export function AssistantMessage({
   const meta = thread.getMessagesMetadata(message);
   const interrupt = thread.interrupt;
   const parentCheckpoint = meta?.firstSeenState?.parent_checkpoint;
-  const config = meta?.firstSeenState?.values ? (meta.firstSeenState.values as any).config : undefined;
+  const config = meta?.firstSeenState?.values
+    ? (meta.firstSeenState.values as any).config
+    : undefined;
   const toolkits = config?.configurable?.tools || [];
   const anthropicStreamedToolCalls = Array.isArray(message.content)
     ? parseAnthropicStreamedToolCalls(message.content)
@@ -109,7 +111,7 @@ export function AssistantMessage({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 px-4 py-3 rounded-lg bg-gray-50 relative",
+        "flex flex-col gap-2 px-4 py-3 rounded-lg bg-gray-50",
         isLoading && "animate-pulse",
       )}
     >
@@ -131,7 +133,7 @@ export function AssistantMessage({
         ) : (
           <div className="flex flex-col gap-2">
             {contentString.length > 0 && (
-              <div className="py-1">
+              <div className="py-1  text-wrap">
                 <MarkdownText>{contentString}</MarkdownText>
               </div>
             )}
@@ -144,7 +146,9 @@ export function AssistantMessage({
                   (hasAnthropicToolCalls && (
                     <ToolCalls toolCalls={anthropicStreamedToolCalls} />
                   )) ||
-                  (hasToolCalls && <ToolCalls toolCalls={message.tool_calls} />)}
+                  (hasToolCalls && (
+                    <ToolCalls toolCalls={message.tool_calls} />
+                  ))}
               </>
             )}
 
