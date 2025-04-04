@@ -1,9 +1,10 @@
 [project]
-name = "react-agent-tool-server"
+name = "vulcan"
 version = "0.0.1"
-description = "Starter template for making a custom Reasoning and Action agent (using tool calling) in LangGraph."
+description = "Vulcan is a Langgraph React agent that uses Arcade tools."
 authors = [
     { name = "Eugene Yurtsev", email = "13333726+hinthornw@users.noreply.github.com" },
+    { name = "Sam Partee", email = "sam@partee.io" },
 ]
 readme = "README.md"
 license = { text = "MIT" }
@@ -12,8 +13,8 @@ dependencies = [
     "langchain-openai>=0.1.22",
     "langchain>=0.2.14",
     "python-dotenv>=1.0.1",
-    "oxp==0.0.2",
     "pyjwt",
+    "langchain-arcade==1.3.1",
 ]
 
 
