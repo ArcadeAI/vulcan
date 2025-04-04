@@ -1,4 +1,6 @@
-# vulcan
+# Vulcan
+
+Langgraph React agent that uses Arcade tools.
 
 ## Set Up Backend (Agent)
 
@@ -16,8 +18,7 @@ Then copy the following to a `.env` file in the backend root directory
 export SUPABASE_URL=
 export SUPABASE_SERVICE_KEY=
 export SUPABASE_JWT_SECRET=
-export OXP_BEARER_TOKEN= # ARCADE_API_KEY (hosted demo)
-export OXP_BASE_URL= # https://api.arcade.dev/v1/oxp (hosted demo)
+export ARCADE_API_KEY=
 export OPENAI_API_KEY=
 export LANGSMITH_API_KEY=
 export LANGSMITH_TRACING=true
